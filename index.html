@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="We present RoSE, a method using a video generative model for monocular normal map
+          estimation, built on a new paradigm that reformulates normal estimation as a shading sequence
+          estimation task.">
+  <meta name="keywords" content="Diffusion, Normal Estimation, Shading, Deep Learning, Computer Vision">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RoSE</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-B3MJJHP6GL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-B3MJJHP6GL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/rose.svg">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/twentytwenty.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <script src="./static/js/jquery-3.2.1.min.js"></script>
+  <script src="./static/js/jquery.event.move.js"></script>
+  <script src="./static/js/jquery.twentytwenty.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/fontawesome.all.min.js"></script>
+  <!--MathJax-->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">Monocular Normal Estimation via Shading Sequence Estimation</h1>
+            <h3 class="title has-text-centered">ICLR 2026 (Oral)</h3>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://zongrui.page/">Zongrui Li</a><sup>1*</sup>,</span>
+              <span class="author-block">
+                <a href="https://openreview.net/profile?id=%7EXinhua_Ma1">Xinhua Ma</a><sup>1*</sup>,</span>
+              <span class="author-block">
+                <a href="https://mhh0318.github.io/">Minghui Hu</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://yunqing-me.github.io/">Yunqing Zhao</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://yingchen001.github.io/">Yingchen Yu</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://q-zh.github.io/">Qian Zheng</a><sup>3</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://scholar.google.com/citations?user=XlQP0GIAAAAJ&hl=en">Chang Liu</a><sup>4†</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://personal.ntu.edu.sg/exdjiang/">Xudong Jiang</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://songbai.site/">Song Bai</a><sup>2</sup>
+              </span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>Nanyang Technological University,</span>
+              <span class="author-block"><sup>2</sup>ByteDance,</span>
+              <span class="author-block"><sup>3</sup>Zhejiang University,</span>
+              <span class="author-block"><sup>4</sup>Shanghai University of Finance and Economics</span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+              </div>
+              <div class="is-size-6 publication-authors">
+                <span class="author-block"><sup>*</sup>Equal Contribution</span>
+                <span class="author-block"><sup>†</sup>Corresponding Author</span>
+              </div>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2602.09929" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                    </span>
+                    <span>arXiv</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="#" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                    </span>
+                    <span>Video</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://github.com/LMozart/ICLR2026-RoSE.git"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Code</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="#" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="far fa-images"></i>
+                    </span>
+                    <span>Dataset</span>
+                  </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <img id="teaser" width="100%" src="./static/images/teaser.png"
+          alt="Experiments demonstrate that RoSE achieves state-of-the-art performance." />
+        <h2 class="subtitle has-text-centered">
+          RoSE is the new state-of-the-art method for monocular normal estimation.
+        </h2>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Monocular normal estimation aims to estimate the normal map from a single RGB image of an object under
+              arbitrary lights. Existing methods rely on deep models to directly predict normal maps. However, they
+              often suffer from 3D misalignment: while the estimated normal maps may appear to have a correct
+              appearance, the reconstructed surfaces often fail to align with the geometric details. We argue that this
+              misalignment stems from the current paradigm: the model struggles to distinguish and reconstruct varying
+              geometry represented in normal maps, as the differences in underlying geometry are reflected only through
+              relatively subtle color variations.
+            </p>
+            <p>
+              To address this issue, we propose a new paradigm that reformulates
+              normal estimation as shading sequence estimation, where shading sequences are more sensitive to various
+              geometric information. Building on this paradigm, we present RoSE, a method that leverages image-to-video
+              generative models to predict shading sequences. The predicted shading sequences are then converted into
+              normal maps by solving a simple ordinary least-squares problem. To enhance robustness and better handle
+              complex objects, RoSE is trained on a synthetic dataset, MultiShade, with diverse shapes, materials, and
+              light conditions. Experiments demonstrate that RoSE achieves state-of-the-art performance on real-world
+              benchmark datasets for object-based monocular normal estimation.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <img id="3d_misalignment" width="100%" src="./static/images/3d_misalignment.png"
+            alt="Illustration of 3D misalignment" />
+          <h2 class="subtitle has-text-centered">
+            Illustration of 3D misalignment.
+          </h2>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0 pb-4">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Gallery</h2>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero is-light is-small mt-4">
+    <div class="hero-body">
+      <div class="container">
+        <div id="results-carousel-horizontal" class="carousel results-carousel">
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/2.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/2.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/2.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/2.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/2.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/2.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/3.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/3.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/3.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/3.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/3.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/3.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/4.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/4.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/4.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/4.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/4.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/4.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/1.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/1.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/1.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/1.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/1.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/1.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/5.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/5.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/5.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/5.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/5.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/5.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/6.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/6.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/6.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/6.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/6.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/6.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/7.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/7.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/7.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/7.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/7.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/7.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="item-list">
+            <div class="twentytwenty-container twentytwenty-container-top">
+              <div class="cmpcontent">
+                <img src="./static/images/input/8.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/8.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-middle">
+              <div class="cmpcontent">
+                <img src="./static/images/LightRig/8.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/8.png">
+              </div>
+            </div>
+            <div class="twentytwenty-container twentytwenty-container-bottom">
+              <div class="cmpcontent">
+                <img src="./static/images/NiRNE/8.png">
+              </div>
+              <div class="cmpcontent">
+                <img src="./static/images/ours/8.png">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Pipeline</h2>
+          <div class="container is-max-desktop">
+            <div class="hero-body">
+              <img id="pipeline" width="100%" src="./static/images/pipeline.png" alt="Pipeline of RoSE" />
+              <h2 class="subtitle has-text-centered">
+                Illustration of RoSE pipeline.
+              </h2>
+            </div>
+          </div>
+          <div class="content has-text-justified">
+            <p>
+              Given a monocular RGB image under arbitrary lighting, RoSE first converts it into a grayscale image,
+              which is then used to generate a consistent sequence of multi-light shading sequence via a video diffusion
+              model. This generation is guided by two complementary feature representations extracted from a CLIP
+              encoder and a VAE encoder. Finally, an ordinary least squares problem is solved using an analytical solver
+              to estimate the normal map from the generated shading sequence. We train the video diffusion model while
+              freezing the CLIP and the VAE encoder.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <script>
+    $(window).on('load', function () {
+      bulmaCarousel.attach('#results-carousel-horizontal', {
+        slidesToScroll: 1,
+        slidesToShow: 3,
+        loop: true,
+        autoplay: true,
+      });
+
+      bulmaCarousel.attach('#results-carousel-vertical', {
+        slidesToScroll: 1,
+        slidesToShow: 5,
+        loop: true,
+        autoplay: true,
+      });
+
+      bulmaCarousel.attach('#results-carousel-testimonials', {
+        slidesToScroll: 1,
+        slidesToShow: 3,
+        loop: true,
+        autoplay: true,
+        breakpoints: [
+          {
+            changePoint: 50 + 260 * 2,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            loop: true,
+            autoplay: true,
+          },
+          {
+            changePoint: 50 + 260 * 3,
+            slidesToShow: 2,
+            slidesToScroll: 1,
+            loop: true,
+            autoplay: true,
+          },
+          {
+            changePoint: 50 + 260 * 4,
+            slidesToShow: 3,
+            slidesToScroll: 1,
+            loop: true,
+            autoplay: true,
+          }
+        ],
+      });
+
+      $(".twentytwenty-container-top").twentytwenty({
+        before_label: 'Input',
+        after_label: 'Ours',
+        default_offset_pct: 0.5,
+      });
+
+      $(".twentytwenty-container-middle").twentytwenty({
+        before_label: 'Neural LightRig',
+        after_label: 'Ours',
+        default_offset_pct: 0.5,
+      });
+
+      $(".twentytwenty-container-bottom").twentytwenty({
+        before_label: 'NiRNE',
+        after_label: 'Ours',
+        default_offset_pct: 0.5,
+      });
+
+      $('.results-carousel').css({
+        'max-height': '2000px',
+        'visibility': 'visible'
+      });
+    });
+  </script>
+
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>@misc{li2026monocularnormalestimationshading,
+      title={Monocular Normal Estimation via Shading Sequence Estimation}, 
+      author={Zongrui Li and Xinhua Ma and Minghui Hu and Yunqing Zhao and Yingchen Yu and Qian Zheng and Chang Liu and Xudong Jiang and Song Bai},
+      year={2026},
+      eprint={2602.09929},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2602.09929}, 
+}</code></pre>
+    </div>
+  </section>
+
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              Website template based on
+              <a href="https://github.com/nerfies/nerfies.github.io">
+                Nerfies
+              </a>
+              and licensed under
+              <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+                CC-BY-SA-4.0
+              </a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
